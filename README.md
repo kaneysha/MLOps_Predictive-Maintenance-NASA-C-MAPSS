@@ -4,7 +4,20 @@
     <img src="https://img.shields.io/badge/CCDS-Project%20template-328F97?logo=cookiecutter" />
 </a>
 
-Predictive maintanance untuk mesin industri berbasis continual learning menggunakan NASA C-MAPSS
+Predictive Maintanance untuk Mesin Industri Berbasis Continual Learning Menggunakan NASA C-MAPSS
+
+## Tujuan
+- Memprediksi waktu kegagalan mesin sebelum benar-benar terjadi sehingga tindakan pemeliharaan dapat dilakukan secara proaktif
+- Mengoptimalkan jadwal perawatan
+- Mengurangi downtime tidak terencana
+- Menekan biaya operasional
+
+## Cara Menjalankan Codespaces
+1. Buka repository Github https://github.com/kaneysha/MLOps_Predictive-Maintenance-NASA-C-MAPSS
+2. Klik tombol 'Code'
+3. Klik tab 'Codespaces'
+4. Klik "Create codespace on main"
+5. Tunggu hingga proses build selesai
 
 ## Project Organization
 
