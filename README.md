@@ -72,3 +72,36 @@ Predictive Maintanance untuk Mesin Industri Berbasis Continual Learning Mengguna
 
 --------
 
+## Data Ingestion
+
+Tujuan: Mengambil data mentah statis dari file eksternal (train_FD001.txt) secara berkala dan menyimpannya ke folder data/raw/ dalam batch kecil untuk mendukung Continual Learning.
+
+Jalankan: python src/ingest_data.py
+
+Script ini akan:
+- Membaca file eksternal TXT FD001
+- Menghapus kolom kosong (dropna(axis=1)) dan memberi nama kolom sesuai sensor dan setting operasi
+- Membuat folder data/raw/ jika belum ada
+- Membagi data menjadi batch kecil (batch_size=50) agar bisa diproses bertahap
+- Menyimpan setiap batch ke file CSV dengan timestamp unik supaya file lama tidak tertimpa
+- Memberikan delay 5 detik antar batch untuk simulasi data streaming
+- Mencetak status file yang disimpan
+
+## Preprocessing
+
+Tujuan: Skrip ini membersihkan data mentah dari folder data/raw/ dan menyimpan hasilnya ke data/processed/cleaned_data.csv agar data mentah siap digunakan untuk feature extraction dan training model tanpa duplikasi.
+
+Jalankan: python src/preprocess.py
+
+Script ini akan:
+- Mencari semua file CSV di folder data/raw/
+- Membaca log processed_log.txt untuk melacak file yang sudah diproses agar tidak diproses ulang
+- Looping tiap file baru:
+  - Print status
+  - Membaca file CSV ke DataFrame
+  - Mengisi nilai kosong (fillna(method='ffill'))
+  - Menghapus kolom unit jika ada
+  - Menyimpan DataFrame bersih ke list sementara
+- Menggabungkan semua data baru menjadi satu CSV (cleaned_data.csv)
+- Update processed_log.txt untuk menandai file yang sudah diproses
+- Print status akhir
