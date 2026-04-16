@@ -105,3 +105,21 @@ Script ini akan:
 - Menggabungkan semua data baru menjadi satu CSV (cleaned_data.csv)
 - Update processed_log.txt untuk menandai file yang sudah diproses
 - Print status akhir
+
+Project ini menggunakan DVC untuk melakukan versioning dataset tanpa menyimpan file besar di Git.
+
+---
+
+## Workflow DVC
+Project ini menggunakan DVC untuk melakukan versioning dataset tanpa menyimpan file besar di Git.
+```
+dvc init                                  <- Inisialisasi DVC
+dvc add data/                         |
+git add data.dvc .gitignore           |   <- Track data awal
+git commit -m "track initial dataset" |
+python ingest_data.py                     <- Simulasi data baru
+dvc add data/                         |
+git add data.dvc                      |   <- Update dataset
+git commit -m "update dataset"        |
+dvc diff                                  <- Cek perubahan dataset
+```
