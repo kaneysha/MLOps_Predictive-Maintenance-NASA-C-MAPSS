@@ -15,4 +15,5 @@ tqdm
 typer
 torch
 jupyter
+mlflow
 -e .
