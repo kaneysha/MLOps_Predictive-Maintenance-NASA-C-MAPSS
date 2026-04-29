@@ -1,0 +1,10 @@
+artifact_location: file:///workspaces/MLOps_Predictive-Maintenance-NASA-C-MAPSS/mlruns/856740779135952251/models/m-9146ef1db5114c39b111ebb186f96e57/artifacts
+creation_timestamp: 1777481810776
+experiment_id: '856740779135952251'
+last_updated_timestamp: 1777481814333
+model_id: m-9146ef1db5114c39b111ebb186f96e57
+model_type: null
+name: model
+source_run_id: fd86b970be6f4abaa8494720145355f4
+status: 2
+status_message: null

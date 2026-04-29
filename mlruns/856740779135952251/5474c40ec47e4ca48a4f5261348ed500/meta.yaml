@@ -1,0 +1,14 @@
+artifact_uri: file:///workspaces/MLOps_Predictive-Maintenance-NASA-C-MAPSS/mlruns/856740779135952251/5474c40ec47e4ca48a4f5261348ed500/artifacts
+end_time: 1777481827738
+entry_point_name: ''
+experiment_id: '856740779135952251'
+lifecycle_stage: active
+run_id: 5474c40ec47e4ca48a4f5261348ed500
+run_name: RF_Experiment_5
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1777481823067
+status: 3
+tags: []
+user_id: vscode

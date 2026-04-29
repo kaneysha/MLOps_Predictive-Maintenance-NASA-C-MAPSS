@@ -24,4 +24,4 @@ for i in range(0, len(df), batch_size):
 
     print(f"Saved: {filename}")
 
-    time.sleep(5)
+    time.sleep(2)

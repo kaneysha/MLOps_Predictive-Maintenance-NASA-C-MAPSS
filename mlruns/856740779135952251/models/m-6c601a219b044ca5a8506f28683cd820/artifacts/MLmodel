@@ -1,0 +1,23 @@
+artifact_path: file:///workspaces/MLOps_Predictive-Maintenance-NASA-C-MAPSS/mlruns/856740779135952251/models/m-6c601a219b044ca5a8506f28683cd820/artifacts
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.pkl
+    predict_fn: predict
+    python_version: 3.12.13
+  sklearn:
+    code: null
+    pickled_model: model.pkl
+    serialization_format: cloudpickle
+    sklearn_version: 1.8.0
+    skops_trusted_types: null
+mlflow_version: 3.11.1
+model_id: m-6c601a219b044ca5a8506f28683cd820
+model_size_bytes: 219467
+model_uuid: m-6c601a219b044ca5a8506f28683cd820
+prompts: null
+run_id: f60c08ada86a4bf0b4b126b54b8199be
+utc_time_created: '2026-04-29 16:56:45.577791'
