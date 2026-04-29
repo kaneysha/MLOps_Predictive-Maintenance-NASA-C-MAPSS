@@ -15,6 +15,11 @@ __pycache__/
 # C extensions
 *.so
 
+# Data
+/data/*
+!data/**/*.dvc
+!data/external/
+
 # Distribution / packaging
 .Python
 build/
