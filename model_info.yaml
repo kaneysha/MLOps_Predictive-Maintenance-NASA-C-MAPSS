@@ -1,0 +1,5 @@
+model_name: NASA_RUL_Model
+version: 6
+stage: Production
+dataset: data/processed/cleaned_data.csv
+notes: Best RMSE
