@@ -122,7 +122,7 @@ git commit -m "update dataset"        |
 dvc diff                                  <- Cek perubahan dataset
 
 ## Model Registry
-Model aktif saat ini: NASA_RUL_Model (Version 8)
+Model aktif saat ini: NASA_RUL_Model (Version 6)
 Stage: Production
 
 Dipilih karena memiliki RMSE terendah dibanding versi lainnya.
