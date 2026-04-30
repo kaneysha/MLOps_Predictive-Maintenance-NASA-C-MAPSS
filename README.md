@@ -108,7 +108,7 @@ Script ini akan:
 
 Project ini menggunakan DVC untuk melakukan versioning dataset tanpa menyimpan file besar di Git.
 
-##Workflow DVC
+## Workflow DVC
 Project ini menggunakan DVC untuk melakukan versioning dataset tanpa menyimpan file besar di Git.
 
 dvc init                                  <- Inisialisasi DVC
@@ -121,7 +121,7 @@ git add data.dvc                      |   <- Update dataset
 git commit -m "update dataset"        |
 dvc diff                                  <- Cek perubahan dataset
 
-##Model Registry
+## Model Registry
 Model aktif saat ini: NASA_RUL_Model (Version 2)
 Stage: Production
 
