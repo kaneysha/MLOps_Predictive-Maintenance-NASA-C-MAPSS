@@ -45,32 +45,28 @@ with mlflow.start_run():
     model.fit(X_train, y_train)
     preds = model.predict(X_test)
 
-    # metrics
     rmse = math.sqrt(mean_squared_error(y_test, preds))
     mae = mean_absolute_error(y_test, preds)
     r2 = r2_score(y_test, preds)
 
-    # log params
+    if r2 < 0.6:
+        raise ValueError(f"Model too weak: R2={r2}")
+
     mlflow.log_param("n_estimators", args.n_estimators)
     mlflow.log_param("max_depth", args.max_depth)
 
-    # log metrics
     mlflow.log_metric("RMSE", rmse)
     mlflow.log_metric("MAE", mae)
     mlflow.log_metric("R2", r2)
 
-    # tags
     mlflow.set_tag("model", "RandomForest")
     mlflow.set_tag("dataset", "C-MAPSS")
 
-    # MODEL REGISTRY
-    if args.register:
-        mlflow.sklearn.log_model(
-            sk_model=model,
-            name="model",
-            registered_model_name="NASA_RUL_Model"
-        )
-    else:
-        mlflow.sklearn.log_model(model, "model")
+    # MODEL LOGGING (FIXED)
+    mlflow.sklearn.log_model(
+        sk_model=model,
+        artifact_path="model",
+        registered_model_name="NASA_RUL_Model" if args.register else None
+    )
 
     print(f"RMSE={rmse:.4f} | R2={r2:.4f}")

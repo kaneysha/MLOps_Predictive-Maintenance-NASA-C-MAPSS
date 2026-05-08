@@ -1,17 +1,19 @@
+import joblib
+import pandas as pd
+from sklearn.metrics import accuracy_score
 import json
-import sys
 
-THRESHOLD = 0.8
+df = pd.read_csv("data/processed/cleaned_data.csv")
 
-with open("metrics.json") as f:
-    metrics = json.load(f)
+X = df.drop("target", axis=1)
+y = df["target"]
 
-accuracy = metrics["accuracy"]
+model = joblib.load("model.pkl")
+pred = model.predict(X)
 
-print(f"Model accuracy: {accuracy}")
+acc = accuracy_score(y, pred)
 
-if accuracy < THRESHOLD:
-    print("Model tidak memenuhi threshold")
-    sys.exit(1)
-else:
-    print("Model lolos validasi")
+print(f"Accuracy: {acc}")
+
+with open("metrics.json", "w") as f:
+    json.dump({"accuracy": acc}, f)
