@@ -17,8 +17,8 @@ def test_data_exists():
 def test_data_structure():
     df = pd.read_csv("data/processed/cleaned_data.csv")
 
-    # CMAPSS biasanya punya RUL / target
-    assert "target" in df.columns, "Kolom target tidak ada!"
+    # CMAPSS biasanya punya RUL
+    assert "RUL" in df.columns, "Kolom RUL tidak ada!"
 
     # minimal tidak kosong
     assert len(df) > 0, "Dataset kosong!"
@@ -50,7 +50,7 @@ def test_model_load():
 def test_model_predict_shape():
     df = pd.read_csv("data/processed/cleaned_data.csv")
 
-    X = df.drop("target", axis=1)
+    X = df.drop("RUL", axis=1)
 
     model = joblib.load("model.pkl")
 
@@ -66,7 +66,7 @@ def test_model_predict_shape():
 def test_prediction_range():
     df = pd.read_csv("data/processed/cleaned_data.csv")
 
-    X = df.drop("target", axis=1)
+    X = df.drop("RUL", axis=1)
 
     model = joblib.load("model.pkl")
 
