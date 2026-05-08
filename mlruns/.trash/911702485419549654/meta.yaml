@@ -1,9 +1,0 @@
-artifact_location: file:///workspaces/MLOps_Predictive-Maintenance-NASA-C-MAPSS/mlruns/911702485419549654
-creation_time: 1777488215681
-experiment_id: '911702485419549654'
-last_update_time: 1777488706035
-lifecycle_stage: deleted
-name: cmapss-model-registry
-tags: {}
-trace_location: null
-workspace: default

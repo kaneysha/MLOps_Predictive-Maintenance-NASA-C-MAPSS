@@ -43,14 +43,14 @@ jobs:
     # ======================
     - name: Train model
       run: |
-        python train.py
+        python src/train.py
 
     # ======================
     # 4. EVALUATION
     # ======================
     - name: Evaluate model
       run: |
-        python evaluate.py
+        python src/evaluate.py
 
     # ======================
     # 5. REGISTER TO MLFLOW
@@ -58,4 +58,4 @@ jobs:
     - name: Register model to MLflow
       if: success()
       run: |
-        python register_model.py
+        python src/register_model.py

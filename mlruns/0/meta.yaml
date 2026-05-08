@@ -1,8 +1,0 @@
-artifact_location: file:///workspaces/MLOps_Predictive-Maintenance-NASA-C-MAPSS/mlruns/0
-creation_time: 1777481804491
-experiment_id: '0'
-last_update_time: 1777481804491
-lifecycle_stage: active
-name: Default
-trace_location: null
-workspace: default
