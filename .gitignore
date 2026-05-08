@@ -196,3 +196,5 @@ mlruns/
 __pycache__/
 *.pyc
 .env
+/model.pkl
+/metrics.json
