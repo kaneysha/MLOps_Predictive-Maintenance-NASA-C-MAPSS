@@ -2,15 +2,18 @@ name: MLOps Automation Pipeline
 
 on:
   push:
-    branches: [ "otomatization" ]
+    branches: ["otomatization"]
   pull_request:
-    branches: [ "otomatization" ]
+    branches: ["otomatization"]
 
 jobs:
   mlops-pipeline:
     runs-on: ubuntu-latest
 
     steps:
+    # ======================
+    # 1. SETUP ENV
+    # ======================
     - name: Checkout repository
       uses: actions/checkout@v3
 
@@ -21,39 +24,40 @@ jobs:
 
     - name: Install dependencies
       run: |
+        pip install --upgrade pip
         pip install -r requirements.txt
+        pip install dvc
 
     # ======================
-    # 1. TESTING
-    # ======================
-    - name: Run unit tests
-      run: |
-        pytest
-
-    # ======================
-    # 2. DVC PULL (DATA)
+    # 2. GET DATA (WAJIB DULUAN)
     # ======================
     - name: Pull data from DVC
       run: |
-        pip install dvc
         dvc pull
 
     # ======================
-    # 3. TRAINING
+    # 3. TESTING
+    # ======================
+    - name: Run unit tests
+      run: |
+        pytest -v
+
+    # ======================
+    # 4. TRAINING
     # ======================
     - name: Train model
       run: |
         python src/train.py
 
     # ======================
-    # 4. EVALUATION
+    # 5. EVALUATION
     # ======================
     - name: Evaluate model
       run: |
         python src/evaluate.py
 
     # ======================
-    # 5. REGISTER TO MLFLOW
+    # 6. REGISTER MODEL
     # ======================
     - name: Register model to MLflow
       if: success()
