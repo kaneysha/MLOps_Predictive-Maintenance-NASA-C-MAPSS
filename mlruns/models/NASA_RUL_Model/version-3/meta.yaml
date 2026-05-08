@@ -1,0 +1,16 @@
+creation_timestamp: 1777489533586
+current_stage: None
+deployment_job_state: null
+description: null
+last_updated_timestamp: 1777489533586
+model_id: m-2481d5ff682049ebb18cf5a089de77dc
+name: NASA_RUL_Model
+run_id: a8f0d54b2739407781abd1b3294348a7
+run_link: null
+source: models:/m-2481d5ff682049ebb18cf5a089de77dc
+status: READY
+status_message: null
+storage_location: file:///workspaces/MLOps_Predictive-Maintenance-NASA-C-MAPSS/mlruns/856740779135952251/models/m-2481d5ff682049ebb18cf5a089de77dc/artifacts
+user_id: null
+version: 3
+workspace: default

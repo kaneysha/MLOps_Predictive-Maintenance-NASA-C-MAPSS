@@ -1,0 +1,14 @@
+artifact_uri: file:///workspaces/MLOps_Predictive-Maintenance-NASA-C-MAPSS/mlruns/856740779135952251/42da12dbd9be4ec78e3611c860f691d4/artifacts
+end_time: 1777489850018
+entry_point_name: ''
+experiment_id: '856740779135952251'
+lifecycle_stage: active
+run_id: 42da12dbd9be4ec78e3611c860f691d4
+run_name: sassy-loon-322
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1777489844140
+status: 3
+tags: []
+user_id: vscode

@@ -1,0 +1,14 @@
+artifact_uri: file:///workspaces/MLOps_Predictive-Maintenance-NASA-C-MAPSS/mlruns/856740779135952251/11845e199a5a44778a20495fa6b94e1b/artifacts
+end_time: 1777490739685
+entry_point_name: ''
+experiment_id: '856740779135952251'
+lifecycle_stage: active
+run_id: 11845e199a5a44778a20495fa6b94e1b
+run_name: mercurial-perch-397
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1777490734375
+status: 3
+tags: []
+user_id: vscode
