@@ -16,3 +16,4 @@ typer
 torch
 jupyter
 -e .
+pytest
