@@ -191,3 +191,8 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+mlruns/
+__pycache__/
+*.pyc
+.env
