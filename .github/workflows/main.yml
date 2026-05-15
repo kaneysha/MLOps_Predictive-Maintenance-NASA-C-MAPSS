@@ -11,55 +11,94 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # 1. SETUP ENVIRONMENT
+    # =========================
+    # 1. CHECKOUT REPO (FIX DVC ISSUE)
+    # =========================
     - name: Checkout repository
       uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
 
+    # =========================
+    # 2. SETUP PYTHON
+    # =========================
     - name: Setup Python
       uses: actions/setup-python@v4
       with:
         python-version: "3.12"
 
+    # =========================
+    # 3. INSTALL DEPENDENCIES
+    # =========================
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install dvc mlflow pytest
+        pip install dvc[all] mlflow pytest
 
-    # 2. LOAD DATA (DVC)
+    # =========================
+    # 4. DEBUG (BIAR GAMPANG CEK ERROR)
+    # =========================
+    - name: Debug repo structure
+      run: |
+        echo "=== LIST FILES ==="
+        ls -la
+        echo "=== CHECK .dvc ==="
+        ls -la .dvc || echo ".dvc NOT FOUND"
+
+    # =========================
+    # 5. CHECK DVC REPO VALIDITY
+    # =========================
+    - name: Verify DVC repo
+      run: |
+        dvc version
+        dvc status
+
+    # =========================
+    # 6. PULL DATA DARI DVC REMOTE
+    # =========================
     - name: Pull DVC data
       run: |
-        dvc pull
+        dvc pull --verbose
 
-    # 3. STAGE 1 - AUTOMATED TESTING
+    # =========================
+    # 7. RUN TESTS
+    # =========================
     - name: Run tests (pytest)
       run: |
         pytest -v
 
-    # 4. STAGE 2 - AUTOMATED TRAINING
+    # =========================
+    # 8. TRAIN MODEL
+    # =========================
     - name: Train model
       run: |
         python src/train.py \
           --n_estimators 200 \
           --max_depth 15
 
-    # 5. STAGE 3 - EVALUATION & VALIDATION
+    # =========================
+    # 9. EVALUATION
+    # =========================
     - name: Validate model performance
       run: |
         python src/evaluate.py
 
-    # optional hard check threshold (CI gate)
+    # =========================
+    # 10. QUALITY GATE
+    # =========================
     - name: Performance gate check
       run: |
         python - <<EOF
         import json
 
-        # kalau kamu simpan metrics.json dari training/eval
         try:
             with open("metrics.json") as f:
                 metrics = json.load(f)
 
-            r2 = metrics["r2"]
+            r2 = metrics.get("r2", 0)
+
+            print(f"R2 score: {r2}")
 
             if r2 < 0.05:
                 raise Exception(f"Model rejected: R2={r2}")
@@ -67,29 +106,37 @@ jobs:
             print("Model passed validation")
 
         except FileNotFoundError:
-            print("metrics.json not found, skipping strict validation")
+            print("metrics.json not found, skipping validation")
         EOF
 
-    # 6. STAGE 4 - AUTO REGISTRY (STAGING)
+    # =========================
+    # 11. MLflow MODEL REGISTRY
+    # =========================
     - name: Register model to MLflow (Staging)
       if: success()
       run: |
         python - <<EOF
         import mlflow
+        import mlflow.tracking
 
         mlflow.set_tracking_uri("file:./mlruns")
-
-        # ambil run terakhir dari train (simple version)
-        import os
-        import mlflow.tracking
 
         client = mlflow.tracking.MlflowClient()
 
         experiment = client.get_experiment_by_name("NASA_CMAPSS_RUL_Experiment")
-        runs = client.search_runs(experiment.experiment_id, order_by=["start_time DESC"])
+
+        if experiment is None:
+            raise Exception("Experiment not found")
+
+        runs = client.search_runs(
+            experiment.experiment_id,
+            order_by=["start_time DESC"]
+        )
+
+        if len(runs) == 0:
+            raise Exception("No MLflow runs found")
 
         run_id = runs[0].info.run_id
-
         model_uri = f"runs:/{run_id}/model"
 
         mlflow.register_model(
@@ -97,5 +144,5 @@ jobs:
             name="NASA_RUL_Model"
         )
 
-        print("Model registered to MLflow (Staging)")
+        print("Model registered successfully")
         EOF
