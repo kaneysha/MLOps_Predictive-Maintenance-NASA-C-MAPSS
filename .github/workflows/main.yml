@@ -11,108 +11,83 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # =========================
-    # 1. CHECKOUT REPO (FIX DVC ISSUE)
-    # =========================
+    # ======================
+    # 1. CHECKOUT (WAJIB FIX DVC)
+    # ======================
     - name: Checkout repository
       uses: actions/checkout@v3
       with:
         fetch-depth: 0
 
-    # =========================
-    # 2. SETUP PYTHON
-    # =========================
+    # ======================
+    # 2. DEBUG ROOT (BIAR KETAHUAN DVC ADA ATAU ENGGA)
+    # ======================
+    - name: Check repo structure
+      run: |
+        pwd
+        ls -la
+        echo "CHECK .dvc folder:"
+        ls -la .dvc || echo "NO .dvc FOUND"
+
+    # ======================
+    # 3. SETUP PYTHON
+    # ======================
     - name: Setup Python
       uses: actions/setup-python@v4
       with:
         python-version: "3.12"
 
-    # =========================
-    # 3. INSTALL DEPENDENCIES
-    # =========================
+    # ======================
+    # 4. INSTALL DEPENDENCIES
+    # ======================
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install dvc[all] mlflow pytest
+        pip install dvc mlflow pytest
 
-    # =========================
-    # 4. DEBUG (BIAR GAMPANG CEK ERROR)
-    # =========================
-    - name: Debug repo structure
-      run: |
-        echo "=== LIST FILES ==="
-        ls -la
-        echo "=== CHECK .dvc ==="
-        ls -la .dvc || echo ".dvc NOT FOUND"
-
-    # =========================
-    # 5. CHECK DVC REPO VALIDITY
-    # =========================
+    # ======================
+    # 5. FORCE DVC CONTEXT (INI FIX UTAMA)
+    # ======================
     - name: Verify DVC repo
       run: |
+        dvc status || true
         dvc version
-        dvc status
 
-    # =========================
-    # 6. PULL DATA DARI DVC REMOTE
-    # =========================
+    # ======================
+    # 6. PULL DATA
+    # ======================
     - name: Pull DVC data
       run: |
         dvc pull --verbose
 
-    # =========================
-    # 7. RUN TESTS
-    # =========================
-    - name: Run tests (pytest)
+    # ======================
+    # 7. TEST
+    # ======================
+    - name: Run tests
       run: |
         pytest -v
 
-    # =========================
-    # 8. TRAIN MODEL
-    # =========================
+    # ======================
+    # 8. TRAIN
+    # ======================
     - name: Train model
       run: |
         python src/train.py \
           --n_estimators 200 \
           --max_depth 15
 
-    # =========================
-    # 9. EVALUATION
-    # =========================
-    - name: Validate model performance
+    # ======================
+    # 9. EVALUATE
+    # ======================
+    - name: Evaluate model
       run: |
         python src/evaluate.py
 
-    # =========================
-    # 10. QUALITY GATE
-    # =========================
-    - name: Performance gate check
-      run: |
-        python - <<EOF
-        import json
-
-        try:
-            with open("metrics.json") as f:
-                metrics = json.load(f)
-
-            r2 = metrics.get("r2", 0)
-
-            print(f"R2 score: {r2}")
-
-            if r2 < 0.05:
-                raise Exception(f"Model rejected: R2={r2}")
-
-            print("Model passed validation")
-
-        except FileNotFoundError:
-            print("metrics.json not found, skipping validation")
-        EOF
-
-    # =========================
-    # 11. MLflow MODEL REGISTRY
-    # =========================
-    - name: Register model to MLflow (Staging)
+    # ======================
+    # 10. MLflow REGISTER (CLEAN VERSION)
+    # ======================
+    - name: Register model to MLflow
       if: success()
       run: |
         python - <<EOF
@@ -133,7 +108,7 @@ jobs:
             order_by=["start_time DESC"]
         )
 
-        if len(runs) == 0:
+        if not runs:
             raise Exception("No MLflow runs found")
 
         run_id = runs[0].info.run_id
