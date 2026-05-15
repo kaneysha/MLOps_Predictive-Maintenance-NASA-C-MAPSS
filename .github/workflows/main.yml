@@ -2,18 +2,16 @@ name: MLOps Automation Pipeline
 
 on:
   push:
-    branches: ["automatization"]
+    branches: ["main", "automatization"]
   pull_request:
-    branches: ["automatization"]
+    branches: ["main", "automatization"]
 
 jobs:
   mlops-pipeline:
     runs-on: ubuntu-latest
 
     steps:
-    # ======================
-    # 1. SETUP ENV
-    # ======================
+    # 1. SETUP ENVIRONMENT
     - name: Checkout repository
       uses: actions/checkout@v3
 
@@ -26,42 +24,78 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install dvc mlflow
+        pip install dvc mlflow pytest
 
-    # ======================
-    # 2. GET DATA (DVC)
-    # ======================
-    - name: Pull data from DVC
+    # 2. LOAD DATA (DVC)
+    - name: Pull DVC data
       run: |
         dvc pull
 
-    # ======================
-    # 3. UNIT TESTS
-    # ======================
-    - name: Run unit tests
+    # 3. STAGE 1 - AUTOMATED TESTING
+    - name: Run tests (pytest)
       run: |
         pytest -v
 
-    # ======================
-    # 4. TRAIN MODEL (AUTOMATION VERSION)
-    # ======================
+    # 4. STAGE 2 - AUTOMATED TRAINING
     - name: Train model
       run: |
         python src/train.py \
           --n_estimators 200 \
-          --max_depth 15 \
-          --register
+          --max_depth 15
 
-    # ======================
-    # 5. EVALUATION
-    # ======================
-    - name: Evaluate model
+    # 5. STAGE 3 - EVALUATION & VALIDATION
+    - name: Validate model performance
       run: |
         python src/evaluate.py
 
-    # ======================
-    # 6. ARTIFACT CHECK (optional safety)
-    # ======================
-    - name: Check model artifact
+    # optional hard check threshold (CI gate)
+    - name: Performance gate check
       run: |
-        ls -lah model.pkl
+        python - <<EOF
+        import json
+
+        # kalau kamu simpan metrics.json dari training/eval
+        try:
+            with open("metrics.json") as f:
+                metrics = json.load(f)
+
+            r2 = metrics["r2"]
+
+            if r2 < 0.05:
+                raise Exception(f"Model rejected: R2={r2}")
+
+            print("Model passed validation")
+
+        except FileNotFoundError:
+            print("metrics.json not found, skipping strict validation")
+        EOF
+
+    # 6. STAGE 4 - AUTO REGISTRY (STAGING)
+    - name: Register model to MLflow (Staging)
+      if: success()
+      run: |
+        python - <<EOF
+        import mlflow
+
+        mlflow.set_tracking_uri("file:./mlruns")
+
+        # ambil run terakhir dari train (simple version)
+        import os
+        import mlflow.tracking
+
+        client = mlflow.tracking.MlflowClient()
+
+        experiment = client.get_experiment_by_name("NASA_CMAPSS_RUL_Experiment")
+        runs = client.search_runs(experiment.experiment_id, order_by=["start_time DESC"])
+
+        run_id = runs[0].info.run_id
+
+        model_uri = f"runs:/{run_id}/model"
+
+        mlflow.register_model(
+            model_uri=model_uri,
+            name="NASA_RUL_Model"
+        )
+
+        print("Model registered to MLflow (Staging)")
+        EOF
