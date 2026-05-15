@@ -1,0 +1,67 @@
+name: MLOps Automation Pipeline
+
+on:
+  push:
+    branches: ["automatization"]
+  pull_request:
+    branches: ["automatization"]
+
+jobs:
+  mlops-pipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+    # ======================
+    # 1. SETUP ENV
+    # ======================
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.12"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install dvc mlflow
+
+    # ======================
+    # 2. GET DATA (DVC)
+    # ======================
+    - name: Pull data from DVC
+      run: |
+        dvc pull
+
+    # ======================
+    # 3. UNIT TESTS
+    # ======================
+    - name: Run unit tests
+      run: |
+        pytest -v
+
+    # ======================
+    # 4. TRAIN MODEL (AUTOMATION VERSION)
+    # ======================
+    - name: Train model
+      run: |
+        python src/train.py \
+          --n_estimators 200 \
+          --max_depth 15 \
+          --register
+
+    # ======================
+    # 5. EVALUATION
+    # ======================
+    - name: Evaluate model
+      run: |
+        python src/evaluate.py
+
+    # ======================
+    # 6. ARTIFACT CHECK (optional safety)
+    # ======================
+    - name: Check model artifact
+      run: |
+        ls -lah model.pkl
