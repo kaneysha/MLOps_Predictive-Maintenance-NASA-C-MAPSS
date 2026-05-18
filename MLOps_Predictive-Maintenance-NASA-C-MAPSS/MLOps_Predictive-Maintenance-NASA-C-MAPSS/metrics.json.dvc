@@ -1,0 +1,5 @@
+outs:
+- md5: 3894b351d82495a26f32df357219d001
+  size: 78
+  hash: md5
+  path: metrics.json

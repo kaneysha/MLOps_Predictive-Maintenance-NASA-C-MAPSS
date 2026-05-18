@@ -1,0 +1,37 @@
+version: '3.9'
+
+services:
+  mlflow-server:
+    image: ghcr.io/mlflow/mlflow:v2.12.1
+    ports:
+      - "5000:5000"
+    command: >
+      mlflow server
+      --backend-store-uri sqlite:///mlflow.db
+      --default-artifact-root /mlflow/artifacts
+      --host 0.0.0.0
+    volumes:
+      - mlflow_db:/mlflow
+      - mlflow_artifacts:/mlflow/artifacts
+    networks:
+      - mlops-network
+
+  api-service:
+    build: .
+    container_name: api-service
+    depends_on:
+      - mlflow-server
+    ports:
+      - "8000:8000"
+    environment:
+      MLFLOW_TRACKING_URI: http://mlflow-server:5000
+    networks:
+      - mlops-network
+
+volumes:
+  mlflow_db:
+  mlflow_artifacts:
+
+networks:
+  mlops-network:
+    driver: bridge
