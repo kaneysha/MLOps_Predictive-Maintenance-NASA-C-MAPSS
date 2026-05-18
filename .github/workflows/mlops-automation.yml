@@ -2,9 +2,9 @@ name: MLOps Automation Pipeline
 
 on:
   push:
-    branches: ["otomatization"]
+    branches: ["orchestration"]
   pull_request:
-    branches: ["otomatization"]
+    branches: ["orchestration"]
 
 jobs:
   mlops-pipeline:
