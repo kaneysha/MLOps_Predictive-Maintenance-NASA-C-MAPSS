@@ -2,9 +2,9 @@ name: MLOps Automation Pipeline
 
 on:
   push:
-    branches: ["main", "automatization"]
+    branches: ["automatization"]
   pull_request:
-    branches: ["main", "automatization"]
+    branches: ["automatization"]
 
 jobs:
   mlops-pipeline:
@@ -12,112 +12,54 @@ jobs:
 
     steps:
     # ======================
-    # 1. CHECKOUT (WAJIB FIX DVC)
+    # 1. SETUP ENV
     # ======================
     - name: Checkout repository
       uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
 
-    # ======================
-    # 2. DEBUG ROOT (BIAR KETAHUAN DVC ADA ATAU ENGGA)
-    # ======================
-    - name: Check repo structure
-      run: |
-        pwd
-        ls -la
-        echo "CHECK .dvc folder:"
-        ls -la .dvc || echo "NO .dvc FOUND"
-
-    # ======================
-    # 3. SETUP PYTHON
-    # ======================
     - name: Setup Python
       uses: actions/setup-python@v4
       with:
         python-version: "3.12"
 
-    # ======================
-    # 4. INSTALL DEPENDENCIES
-    # ======================
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
+        pip install --upgrade pip
         pip install -r requirements.txt
-        pip install dvc mlflow pytest
+        pip install dvc
 
     # ======================
-    # 5. FORCE DVC CONTEXT (INI FIX UTAMA)
+    # 2. GET DATA (WAJIB DULUAN)
     # ======================
-    - name: Verify DVC repo
+    - name: Pull data from DVC
       run: |
-        dvc status || true
-        dvc version
+        dvc pull
 
     # ======================
-    # 6. PULL DATA
+    # 3. TESTING
     # ======================
-    - name: Pull DVC data
-      run: |
-        dvc pull --verbose
-
-    # ======================
-    # 7. TEST
-    # ======================
-    - name: Run tests
+    - name: Run unit tests
       run: |
         pytest -v
 
     # ======================
-    # 8. TRAIN
+    # 4. TRAINING
     # ======================
     - name: Train model
       run: |
-        python src/train.py \
-          --n_estimators 200 \
-          --max_depth 15
+        python src/train.py
 
     # ======================
-    # 9. EVALUATE
+    # 5. EVALUATION
     # ======================
     - name: Evaluate model
       run: |
         python src/evaluate.py
 
     # ======================
-    # 10. MLflow REGISTER (CLEAN VERSION)
+    # 6. REGISTER MODEL
     # ======================
     - name: Register model to MLflow
       if: success()
       run: |
-        python - <<EOF
-        import mlflow
-        import mlflow.tracking
-
-        mlflow.set_tracking_uri("file:./mlruns")
-
-        client = mlflow.tracking.MlflowClient()
-
-        experiment = client.get_experiment_by_name("NASA_CMAPSS_RUL_Experiment")
-
-        if experiment is None:
-            raise Exception("Experiment not found")
-
-        runs = client.search_runs(
-            experiment.experiment_id,
-            order_by=["start_time DESC"]
-        )
-
-        if not runs:
-            raise Exception("No MLflow runs found")
-
-        run_id = runs[0].info.run_id
-        model_uri = f"runs:/{run_id}/model"
-
-        mlflow.register_model(
-            model_uri=model_uri,
-            name="NASA_RUL_Model"
-        )
-
-        print("Model registered successfully")
-        EOF
+        python src/register_model.py
