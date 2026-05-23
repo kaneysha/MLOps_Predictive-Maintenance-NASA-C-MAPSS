@@ -7,9 +7,9 @@ on:
     branches: ["otomatization"]
 
 env:
-  MINIO_ENDPOINT_URL: ${{ secrets.MINIO_ENDPOINT_URL }}
-  MINIO_ACCESS_KEY: ${{ secrets.MINIO_ACCESS_KEY }}
-  MINIO_SECRET_KEY: ${{ secrets.MINIO_SECRET_KEY }}
+  MLFLOW_S3_ENDPOINT_URL: ${{ secrets.MINIO_ENDPOINT_URL }}
+  AWS_ACCESS_KEY_ID: ${{ secrets.MINIO_ACCESS_KEY }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.MINIO_SECRET_KEY }}
   MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
   MLFLOW_EXPERIMENT_NAME: "nasa_cmapss"
   MLFLOW_MODEL_NAME: "nasa_cmapss_model"
