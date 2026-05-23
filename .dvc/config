@@ -1,4 +1,5 @@
 [core]
-    remote = localremote
-['remote "localremote"']
-    url = ../dvc-storage
+    remote = minio
+['remote "minio"']
+    url = s3://nasa-cmapss/dvc-cache
+    access_key_id = minioadmin
