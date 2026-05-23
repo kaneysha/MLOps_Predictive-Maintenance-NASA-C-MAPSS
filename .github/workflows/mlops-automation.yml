@@ -10,7 +10,16 @@ env:
   MINIO_ENDPOINT_URL: ${{ secrets.MINIO_ENDPOINT_URL }}
   MINIO_ACCESS_KEY: ${{ secrets.MINIO_ACCESS_KEY }}
   MINIO_SECRET_KEY: ${{ secrets.MINIO_SECRET_KEY }}
+  MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+  MLFLOW_EXPERIMENT_NAME: "nasa_cmapss"
+  MLFLOW_MODEL_NAME: "nasa_cmapss_model"
   TRAIN_DATA: 'data/processed/cleaned_data.csv'
+  N_ESTIMATORS: ${{ secrets.N_ESTIMATORS }}
+  MAX_DEPTH: ${{ secrets.MAX_DEPTH }}
+  MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_TRACKING_USERNAME }}
+  MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
+  MIN_R2: ${{ secrets.MIN_R2 }}
+  MAX_RMSE: ${{ secrets.MAX_RMSE }}
 
 jobs:
   mlops-pipeline:
@@ -63,13 +72,31 @@ jobs:
     - name: Train model
       run: |
         python src/train.py
+      env:
+        MLFLOW_TRACKING_URI: ${{ env.MLFLOW_TRACKING_URI }}
+        MLFLOW_EXPERIMENT_NAME: ${{ env.MLFLOW_EXPERIMENT_NAME }}
+        MLFLOW_MODEL_NAME: ${{ env.MLFLOW_MODEL_NAME }}
+        MINIO_ENDPOINT_URL: ${{ env.MINIO_ENDPOINT_URL }}
+        AWS_ACCESS_KEY_ID: ${{ env.MINIO_ACCESS_KEY }}
+        AWS_SECRET_ACCESS_KEY: ${{ env.MINIO_SECRET_KEY }}
+        MLFLOW_TRACKING_USERNAME: ${{ env.MLFLOW_TRACKING_USERNAME }} 
+        MLFLOW_TRACKING_PASSWORD: ${{ env.MLFLOW_TRACKING_PASSWORD }}
+        N_ESTIMATORS: ${{ env.N_ESTIMATORS }}
+        MAX_DEPTH: ${{ env.MAX_DEPTH }}
+        MIN_R2: ${{ env.MIN_R2 }}
+        MAX_RMSE: ${{ env.MAX_RMSE }}
 
     # ======================
     # 5. EVALUATION
     # ======================
-    - name: Evaluate model
+    - name: Evaluate model performance
       run: |
         python src/evaluate.py
+      env:
+        MIN_R2: ${{ env.MIN_R2 }}
+        MAX_RMSE: ${{ env.MAX_RMSE }}
+        MLFLOW_TRACKING_URI: ${{ env.MLFLOW_TRACKING_URI }}
+        MLFLOW_EXPERIMENT_NAME: ${{ env.MLFLOW_EXPERIMENT_NAME }}
 
     # ======================
     # 6. REGISTER MODEL
@@ -78,3 +105,12 @@ jobs:
       if: success()
       run: |
         python src/register_model.py
+      env:
+        MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+        MLFLOW_TRACKING_USERNAME: ${{ env.MLFLOW_TRACKING_USERNAME }} 
+        MLFLOW_TRACKING_PASSWORD: ${{ env.MLFLOW_TRACKING_PASSWORD }}
+        MLFLOW_EXPERIMENT_NAME: ${{ env.MLFLOW_EXPERIMENT_NAME }}
+        MLFLOW_S3_ENDPOINT_URL: ${{ env.MINIO_ENDPOINT_URL }}
+        AWS_ACCESS_KEY_ID: ${{ env.MINIO_ACCESS_KEY }}
+        AWS_SECRET_ACCESS_KEY: ${{ env.MINIO_SECRET_KEY }}
+        MLFLOW_MODEL_NAME: ${{ env.MLFLOW_MODEL_NAME }}
