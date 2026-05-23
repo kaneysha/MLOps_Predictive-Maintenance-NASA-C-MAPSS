@@ -16,7 +16,6 @@ __pycache__/
 *.so
 
 # Data
-/data/*
 !data/**/*.dvc
 !data/external/
 
@@ -192,9 +191,9 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
-mlruns/
 __pycache__/
 *.pyc
 .env
-/model.pkl
 /metrics.json
+.dvc
+mlruns/

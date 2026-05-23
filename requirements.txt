@@ -18,3 +18,5 @@ jupyter
 -e .
 pytest
 mlflow
+dvc-s3
+dvc

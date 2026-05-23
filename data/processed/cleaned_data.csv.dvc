@@ -1,0 +1,5 @@
+outs:
+- md5: df00bdde05cb268ea3cc7204f691ac9e
+  size: 41284
+  hash: md5
+  path: cleaned_data.csv

@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: ["otomatization"]
 
+env:
+  MINIO_ENDPOINT_URL: ${{ secrets.MINIO_ENDPOINT_URL }}
+  MINIO_ACCESS_KEY: ${{ secrets.MINIO_ACCESS_KEY }}
+  MINIO_SECRET_KEY: ${{ secrets.MINIO_SECRET_KEY }}
+  TRAIN_DATA: 'data/processed/cleaned_data.csv'
+
 jobs:
   mlops-pipeline:
     runs-on: ubuntu-latest
@@ -26,14 +32,23 @@ jobs:
       run: |
         pip install --upgrade pip
         pip install -r requirements.txt
-        pip install dvc
 
     # ======================
     # 2. GET DATA (WAJIB DULUAN)
     # ======================
+    - name: Configure DVC remote
+      run: |
+        dvc remote modify minio endpointurl $MINIO_ENDPOINT_URL
+        dvc remote modify --local minio access_key_id $MINIO_ACCESS_KEY
+        dvc remote modify --local minio secret_access_key $MINIO_SECRET_KEY
+      env:
+        MINIO_ENDPOINT_URL: ${{ env.MINIO_ENDPOINT_URL }}
+        MINIO_ACCESS_KEY: ${{ env.MINIO_ACCESS_KEY }}
+        MINIO_SECRET_KEY: ${{ env.MINIO_SECRET_KEY }}
+
     - name: Pull data from DVC
       run: |
-        dvc pull
+        dvc pull ${{ env.TRAIN_DATA }} --no-run-cache
 
     # ======================
     # 3. TESTING
