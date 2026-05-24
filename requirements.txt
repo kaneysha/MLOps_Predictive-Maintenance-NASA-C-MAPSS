@@ -15,10 +15,14 @@ tqdm
 typer
 torch
 jupyter
--e .
 pytest
 mlflow
 boto3<1.43.1
 botocore<1.43.1
 dvc-s3
 dvc
+fastapi
+uvicorn
+scikit-learn
+joblib
+numpy

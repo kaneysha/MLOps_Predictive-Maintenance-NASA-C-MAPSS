@@ -1,0 +1,78 @@
+version: "3.9"
+
+services:
+
+  mlflow-server:
+    image: mlflow-gacor:latest
+    container_name: mlflow-server
+
+    restart: unless-stopped
+
+    ports:
+      - "5000:5000"
+
+    env_file:
+      - .env
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    environment:
+      MLFLOW_BACKEND_STORE_URI: postgresql://${POSTGRES_USER:-mlflow}:${POSTGRES_PASSWORD:-mlflow_secret}@${POSTGRES_HOST}:5433/${POSTGRES_DB:-mlflow_db}
+
+      MLFLOW_DEFAULT_ARTIFACT_ROOT: s3://${MINIO_BUCKET:-mlflow-artifacts}/
+
+      MLFLOW_S3_ENDPOINT_URL: ${MLFLOW_S3_ENDPOINT_URL}
+
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+
+    command:
+      - /bin/sh
+      - -c
+      - >
+          mlflow server
+          --backend-store-uri postgresql://${POSTGRES_USER:-mlflow}:${POSTGRES_PASSWORD:-mlflow_secret}@${POSTGRES_HOST}:5433/${POSTGRES_DB:-mlflow_db}
+          --default-artifact-root s3://${MINIO_BUCKET:-mlflow-artifacts}/
+          --artifacts-destination s3://${MINIO_BUCKET:-mlflow-artifacts}/
+          --serve-artifacts
+          --allowed-hosts='*'
+          --cors-allowed-origins='*'
+          --host 0.0.0.0
+          --port 5000
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+
+    environment:
+      MINIO_ROOT_USER: ${AWS_ACCESS_KEY_ID}
+      MINIO_ROOT_PASSWORD: ${AWS_SECRET_ACCESS_KEY}
+
+    command: server /data --console-address ":9001"
+
+    volumes:
+      - minio_data:/data
+
+    networks:
+      - mlops-network
+
+
+networks:
+  mlops-network:
+    driver: bridge
+
+
+volumes:
+  minio_data:

@@ -37,7 +37,7 @@ def test_no_missing_values():
 # 4. TEST MODEL LOAD
 # =========================
 def test_model_load():
-    model_path = "model.pkl"
+    model_path = "models/model.pkl"
     assert os.path.exists(model_path), "Model belum di-training!"
 
     model = joblib.load(model_path)
@@ -52,7 +52,7 @@ def test_model_predict_shape():
 
     X = df.drop("RUL", axis=1)
 
-    model = joblib.load("model.pkl")
+    model = joblib.load("models/model.pkl")
 
     preds = model.predict(X)
 
@@ -68,7 +68,7 @@ def test_prediction_range():
 
     X = df.drop("RUL", axis=1)
 
-    model = joblib.load("model.pkl")
+    model = joblib.load("models/model.pkl")
 
     preds = model.predict(X)
 

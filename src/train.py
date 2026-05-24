@@ -112,7 +112,7 @@ with mlflow.start_run(run_name=run_name) as run:
     mlflow.log_metric("R2", r2)
 
     # SAVE MODEL LOCAL (INI PENTING)
-    joblib.dump(model, "model.pkl")
+    joblib.dump(model, "models/model.pkl")
 
     # SAVE TO MLFLOW
     mlflow.sklearn.log_model(model, "model")
