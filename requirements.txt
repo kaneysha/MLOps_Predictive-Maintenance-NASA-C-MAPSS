@@ -25,4 +25,4 @@ fastapi
 uvicorn
 scikit-learn
 joblib
-numpy
+psycopg2-binary
