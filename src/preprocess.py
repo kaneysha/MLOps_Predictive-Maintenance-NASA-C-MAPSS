@@ -2,17 +2,17 @@ import pandas as pd
 import glob
 import os
 
-# Path
-RAW_PATH = 'data/raw/*.csv'
-LOG_FILE = 'data/processed_log.txt'
-OUTPUT_FILE = 'data/processed/cleaned_data.csv'
+# PATH CONFIG
+RAW_PATH = "data/raw/*.csv"
+OUTPUT_FILE = "data/processed/cleaned_data.csv"
+LOG_FILE = "data/processed_log.txt"
 
-# Ambil semua file raw
+# GET RAW FILES
 all_files = glob.glob(RAW_PATH)
 
-# Load file yang sudah pernah diproses
+# LOAD PROCESSED LOG
 if os.path.exists(LOG_FILE):
-    with open(LOG_FILE, 'r') as f:
+    with open(LOG_FILE, "r") as f:
         processed_files = set(f.read().splitlines())
 else:
     processed_files = set()
@@ -20,62 +20,87 @@ else:
 new_data = []
 new_processed_files = []
 
+# PROCESS FILES
 for file in all_files:
+
     if file in processed_files:
-        print(f"[SKIP] {file} sudah diproses")
+        print(f"[SKIP] {file} already processed")
         continue
 
     print(f"[INFO] Processing {file}")
 
     try:
+
         df = pd.read_csv(file)
 
         # HANDLE MISSING VALUE
         df = df.ffill()
 
-        # HITUNG RUL (WAJIB NASA)
-        if 'unit' in df.columns and 'cycle' in df.columns:
-            rul_df = df.groupby('unit')['cycle'].max().reset_index()
-            rul_df.columns = ['unit', 'max_cycle']
+        # COMPUTE RUL
+        if "unit" in df.columns and "cycle" in df.columns:
 
-            df = df.merge(rul_df, on='unit')
-            df['RUL'] = df['max_cycle'] - df['cycle']
+            rul_df = (
+                df.groupby("unit")["cycle"]
+                .max()
+                .reset_index()
+            )
 
-            df = df.drop(columns=['max_cycle'])
+            rul_df.columns = ["unit", "max_cycle"]
+
+            df = df.merge(rul_df, on="unit")
+
+            df["RUL"] = (
+                df["max_cycle"] - df["cycle"]
+            )
+
+            df = df.drop(columns=["max_cycle"])
 
         else:
-            print(f"[WARNING] Kolom 'unit' atau 'cycle' tidak ditemukan di {file}")
+            print(
+                f"[WARNING] unit/cycle not found in {file}"
+            )
 
-        # DROP KOLOM TIDAK PERLU
-        if 'unit' in df.columns:
-            df = df.drop(columns=['unit'])
+        # DROP UNIT ID
+        if "unit" in df.columns:
+            df = df.drop(columns=["unit"])
 
-        # SIMPAN KE LIST
+        # SAVE TO LIST
         new_data.append(df)
         new_processed_files.append(file)
 
+        print(f"[SUCCESS] {file} processed")
+
     except Exception as e:
-        print(f"[ERROR] Gagal proses {file}: {e}")
+        print(f"[ERROR] Failed processing {file}: {e}")
 
-# GABUNG & SIMPAN
+# SAVE FINAL DATA
 if new_data:
-    final_df = pd.concat(new_data, ignore_index=True)
 
-    os.makedirs('data/processed', exist_ok=True)
+    final_df = pd.concat(
+        new_data,
+        ignore_index=True
+    )
 
-    if os.path.exists(OUTPUT_FILE):
-        final_df.to_csv(OUTPUT_FILE, mode='a', header=False, index=False)
-        print("[INFO] Data ditambahkan ke file existing")
-    else:
-        final_df.to_csv(OUTPUT_FILE, index=False)
-        print("[INFO] File baru dibuat")
+    os.makedirs(
+        "data/processed",
+        exist_ok=True
+    )
 
-    # Update log file
-    with open(LOG_FILE, 'a') as f:
+    # OVERWRITE
+    final_df.to_csv(
+        OUTPUT_FILE,
+        index=False
+    )
+
+    print("\n[INFO] Dataset saved")
+    print(f"[INFO] Shape: {final_df.shape}")
+
+    # Update processed log
+    with open(LOG_FILE, "a") as f:
         for file in new_processed_files:
-            f.write(file + '\n')
+            f.write(file + "\n")
 
-    print("[SUCCESS] Data baru diproses & disimpan")
+    print("[SUCCESS] Processing completed")
 
 else:
-    print("[INFO] Tidak ada data baru")
+    print("[INFO] No new files found")
