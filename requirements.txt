@@ -26,3 +26,4 @@ uvicorn
 scikit-learn
 joblib
 psycopg2-binary
+prometheus-fastapi-instrumentator
