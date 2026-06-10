@@ -11,7 +11,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
 from prometheus_fastapi_instrumentator import Instrumentator
-from prometheus_client import Counter, Histogram, Gauge
+from prometheus_client import Histogram, Counter, Gauge
 
 # ======================
 # SETUP
@@ -24,17 +24,17 @@ app = FastAPI(title="ML Model API", version="1.0")
 HOSTNAME = socket.gethostname()
 
 # ======================
-# PROMETHEUS METRICS
+# METRICS
 # ======================
-request_count = Counter(
-    "model_prediction_requests_total",
-    "Total prediction requests"
-)
-
 prediction_score = Histogram(
     "model_prediction_score",
     "Distribution of model prediction scores",
     buckets=[0, 10, 20, 30, 50, 75, 100, 150, float("inf")]
+)
+
+request_count = Counter(
+    "model_prediction_requests_total",
+    "Total prediction requests"
 )
 
 model_accuracy = Gauge(
@@ -61,8 +61,11 @@ MLFLOW_TRACKING_URI = os.getenv(
 
 mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
 
+# baseline (INI PENTING)
+BASELINE_MEAN = 5000  # dari sensor normal NASA CMAPSS (approx anchor)
+
 # ======================
-# STARTUP (FIXED)
+# STARTUP
 # ======================
 @app.on_event("startup")
 def load_model():
@@ -73,8 +76,8 @@ def load_model():
 
         logger.info(f"Model loaded from {model_uri}")
 
-        model_accuracy.set(0.95)
-        data_drift_score.set(0.10)
+        model_accuracy.set(1.0)
+        data_drift_score.set(0.0)
 
     except Exception as e:
         MODEL = None
@@ -112,32 +115,44 @@ def health():
 def predict(req: PredictionRequest):
 
     if MODEL is None:
-        raise HTTPException(
-            status_code=503,
-            detail="Model not loaded"
-        )
+        raise HTTPException(status_code=503, detail="Model not loaded")
 
     try:
         df = pd.DataFrame(req.data)
         preds = MODEL.predict(df)
-
-        # metrics
-        request_count.inc()
-
         preds_list = list(preds)
+
+        # ======================
+        # METRICS BASIC
+        # ======================
+        request_count.inc()
 
         for score in preds_list:
             prediction_score.observe(float(score))
 
-        # drift logic (lebih aman pakai scalar)
-        mean_pred = float(pd.Series(preds_list).mean())
+        # ======================
+        # DRIFT DETECTION (REALISTIC)
+        # ======================
 
-        model_accuracy.set(0.93)
-        data_drift_score.set(0.12)
+        # ambil mean input data
+        input_mean = float(df.mean(numeric_only=True).mean())
 
-        if mean_pred > 80:
-            data_drift_score.set(0.7)
-            model_accuracy.set(0.65)
+        # hitung deviation dari baseline
+        drift = abs(input_mean - BASELINE_MEAN) / BASELINE_MEAN
+
+        # clamp 0 - 1
+        drift_score = min(drift, 1.0)
+
+        data_drift_score.set(drift_score)
+
+        # ======================
+        # ACCURACY SIMULATION
+        # ======================
+
+        # semakin besar drift → accuracy turun
+        accuracy = max(0.2, 1.0 - drift_score)
+
+        model_accuracy.set(accuracy)
 
         return PredictionResponse(
             predictions=preds_list,
@@ -154,20 +169,16 @@ def predict(req: PredictionRequest):
 # ======================
 @app.get("/models")
 def list_models():
-    try:
-        client = mlflow.tracking.MlflowClient()
-        models = client.search_registered_models()
+    client = mlflow.tracking.MlflowClient()
+    models = client.search_registered_models()
 
-        return [
-            {
-                "name": m.name,
-                "versions": [
-                    {"version": v.version, "stage": v.current_stage}
-                    for v in m.latest_versions
-                ]
-            }
-            for m in models
-        ]
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    return [
+        {
+            "name": m.name,
+            "versions": [
+                {"version": v.version, "stage": v.current_stage}
+                for v in m.latest_versions
+            ]
+        }
+        for m in models
+    ]
