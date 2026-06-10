@@ -1,7 +1,7 @@
 import os
 import socket
 import logging
-from typing import List, Dict
+from typing import List, Dict, Any
 
 import pandas as pd
 import mlflow
@@ -26,70 +26,67 @@ HOSTNAME = socket.gethostname()
 # ======================
 # PROMETHEUS METRICS
 # ======================
-
-# Request counter
 request_count = Counter(
     "model_prediction_requests_total",
     "Total prediction requests"
 )
 
-# Distribution output model (monitoring tambahan)
 prediction_score = Histogram(
     "model_prediction_score",
     "Distribution of model prediction scores",
     buckets=[0, 10, 20, 30, 50, 75, 100, 150, float("inf")]
 )
 
-# ======================
-# TRIGGER METRICS
-# ======================
-
-# Trigger A: performance-based (accuracy drop)
 model_accuracy = Gauge(
     "model_accuracy",
     "Current model accuracy"
 )
 
-# Trigger B: data drift detection
 data_drift_score = Gauge(
     "data_drift_score",
     "Data drift score"
 )
 
-# expose /metrics
 Instrumentator().instrument(app).expose(app)
 
 # ======================
-# MLflow model load
+# MODEL
 # ======================
 MODEL = None
 
-MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI", "http://mlflow-server:5000")
+MLFLOW_TRACKING_URI = os.getenv(
+    "MLFLOW_TRACKING_URI",
+    "http://mlflow-server:5000"
+)
 
 mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
 
+# ======================
+# STARTUP (FIXED)
+# ======================
 @app.on_event("startup")
 def load_model():
     global MODEL
     try:
         model_uri = "models:/nasa_cmapss_model/Production"
         MODEL = mlflow.pyfunc.load_model(model_uri)
+
         logger.info(f"Model loaded from {model_uri}")
 
-        # nilai awal (biar Grafana gak kosong)
         model_accuracy.set(0.95)
         data_drift_score.set(0.10)
 
     except Exception as e:
-        logger.error(f"MODEL LOAD ERROR: {e}")
         MODEL = None
+        logger.error(f"MODEL LOAD ERROR: {e}")
 
 
 # ======================
 # SCHEMA
 # ======================
 class PredictionRequest(BaseModel):
-    data: List[Dict[str, float]]
+    data: List[Dict[str, Any]]
+
 
 class PredictionResponse(BaseModel):
     predictions: List[float]
@@ -97,71 +94,80 @@ class PredictionResponse(BaseModel):
 
 
 # ======================
-# HEALTH CHECK
+# HEALTH
 # ======================
 @app.get("/health")
 def health():
     return {
-        "status": "healthy",
+        "status": "healthy" if MODEL else "degraded",
         "model_loaded": MODEL is not None,
         "hostname": HOSTNAME
     }
 
 
 # ======================
-# PREDICT ENDPOINT
+# PREDICT
 # ======================
 @app.post("/predict", response_model=PredictionResponse)
 def predict(req: PredictionRequest):
 
     if MODEL is None:
-        raise HTTPException(status_code=400, detail="Model not loaded")
+        raise HTTPException(
+            status_code=503,
+            detail="Model not loaded"
+        )
 
-    df = pd.DataFrame(req.data)
-    preds = MODEL.predict(df)
+    try:
+        df = pd.DataFrame(req.data)
+        preds = MODEL.predict(df)
 
-    # ======================
-    # PROMETHEUS METRICS UPDATE
-    # ======================
+        # metrics
+        request_count.inc()
 
-    request_count.inc()
+        preds_list = list(preds)
 
-    for score in preds:
-        prediction_score.observe(float(score))
+        for score in preds_list:
+            prediction_score.observe(float(score))
 
-    # ======================
-    # SIMULASI SIGNAL
-    # ======================
+        # drift logic (lebih aman pakai scalar)
+        mean_pred = float(pd.Series(preds_list).mean())
 
-    # default normal condition
-    model_accuracy.set(0.93)
-    data_drift_score.set(0.12)
+        model_accuracy.set(0.93)
+        data_drift_score.set(0.12)
 
-    if preds.mean() > 80:
-        data_drift_score.set(0.7)   # drift tinggi
-        model_accuracy.set(0.65)    # performa turun
+        if mean_pred > 80:
+            data_drift_score.set(0.7)
+            model_accuracy.set(0.65)
 
-    return PredictionResponse(
-        predictions=preds.tolist(),
-        served_by=HOSTNAME
-    )
+        return PredictionResponse(
+            predictions=preds_list,
+            served_by=HOSTNAME
+        )
+
+    except Exception as e:
+        logger.error(f"PREDICT ERROR: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ======================
-# LIST MODELS (MLflow registry)
+# MODELS LIST
 # ======================
 @app.get("/models")
 def list_models():
-    client = mlflow.tracking.MlflowClient()
-    models = client.search_registered_models()
+    try:
+        client = mlflow.tracking.MlflowClient()
+        models = client.search_registered_models()
 
-    return [
-        {
-            "name": m.name,
-            "versions": [
-                {"version": v.version, "stage": v.current_stage}
-                for v in m.latest_versions
-            ]
-        }
-        for m in models
-    ]
+        return [
+            {
+                "name": m.name,
+                "versions": [
+                    {"version": v.version, "stage": v.current_stage}
+                    for v in m.latest_versions
+                ]
+            }
+            for m in models
+        ]
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

@@ -1,4 +1,4 @@
-name: MLOps Automation Pipeline (CT Closed Loop)
+name: mlops-pipeline
 
 on:
   push:
