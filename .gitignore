@@ -1,6 +1,3 @@
-# Data
-/data/
-
 # Mac OS-specific storage files
 .DS_Store
 
@@ -17,6 +14,10 @@ __pycache__/
 
 # C extensions
 *.so
+
+# Data
+!data/**/*.dvc
+!data/external/
 
 # Distribution / packaging
 .Python
@@ -189,3 +190,10 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+__pycache__/
+*.pyc
+.env
+/metrics.json
+.dvc
+mlruns/

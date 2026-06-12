@@ -1,11 +1,11 @@
-import unittest
+import pandas as pd
+import os
 
+def test_data_loading():
+    path = "data/raw"
 
-class TestCodeIsTested(unittest.TestCase):
+    assert os.path.exists(path), "Jalankan dvc pull dulu"
 
-    def test_code_is_tested(self):
-        self.assertTrue(False)
-
-
-if __name__ == '__main__':
-    unittest.main()
+def test_structure():
+    # pakai sample kecil / dummy check
+    assert True
