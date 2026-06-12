@@ -2,10 +2,10 @@ name: mlops-pipeline
 
 on:
   push:
-    branches: ["otomatization"]
+    branches: ["main"]
 
   pull_request:
-    branches: ["otomatization"]
+    branches: ["main"]
 
   repository_dispatch:
     types: [retrain]
